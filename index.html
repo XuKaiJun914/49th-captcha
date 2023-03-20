@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="js/vue.js"></script>
+    <title>Document</title>
+    <style>
+        .captcha {
+            width: 500px;
+            height: 500px;
+        }
+
+        .captcha>div {
+            height: 25%;
+            display: flex;
+        }
+
+        .captcha>div>div {
+            width: 25%;
+            border: solid 1px #ccc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .full {
+            background: lightblue;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <h3>{{success ? "驗證成功" : "驗證失敗"}}</h3>
+        <button @click="showall">全部翻牌</button><br><br>
+        <div class="captcha">
+            <div v-for="(item,idx) in captcha">
+                <div v-for="(item2,idx2) in item" :class="{'full':item2.show}" @click="clickcard(idx,idx2)">{{item2.show
+                    ? item2.value : ''}}</div>
+            </div>
+        </div>
+    </div>
+    <script>
+        let vue = Vue.createApp({
+            data() {
+                return {
+                    captcha: [],
+                    success: false,
+                    allshowing: false,
+                    checkArr: []
+                }
+            },
+            methods: {
+                showall() {
+                    this.allshowing = !this.allshowing;
+                    if (this.allshowing) {
+                        this.success = false
+                        this.captcha.map(x => x.map(y => y.show = true))
+                    } else {
+                        this.captcha.map(x => x.map(y => y.show = false))
+                    }
+                },
+                clickcard(row, col) {
+                    if (this.allshowing) this.showall()
+                    if (this.captcha[row][col].show) return
+                    this.captcha[row][col].show = !this.captcha[row][col].show;
+                    if (this.captcha[row][col].show) this.checkArr.push({col:col,row:row,val:this.captcha[row][col].value});
+                    this.success = this.captcha.map(x=>x.filter(y=>y.show))[0].length ==4 && this.captcha.map(x=>x.filter(y=>y.show))[1].length ==4;
+                    console.log(this.captcha.map(x=>x.filter(y=>y.show)))
+                }
+            },
+            watch: {
+                checkArr: {
+                    handler: function (val, oldVal) {
+                        if (val.length == 2) {
+                            if (val[0].val == val[1].val) {
+                                this.checkArr = [];
+                            } else {
+                                setTimeout(() => {
+                                    this.success = false
+                                    val.forEach(x=>{
+                                        this.captcha[x.row][x.col].show = false
+                                    })
+                                    this.checkArr = [];
+                                }, 500)
+                            }
+                        }
+                    },
+                    deep: true,
+                }
+            },
+            mounted() {
+                let row = 2;
+                let col = 4;
+                let StringArr = []
+                for (let i = 0; i < (row * col / 2); i++) {
+                    let str = String.fromCharCode(Math.floor(Math.random() * 26) + 65);
+                    if (StringArr.indexOf(str) == -1) {
+                        StringArr.push(str);
+                    } else {
+                        i--;
+                    }
+                }
+                for (let i = 0; i < row; i++) {
+                    let arr = [];
+                    for (let j = 0; j < col; j++) {
+                        arr.push({
+                            value: StringArr[j],
+                            show: false
+                        });
+                    }
+                    arr.sort(() => Math.random() - 0.5)
+                    this.captcha.push(arr);
+                }
+            }
+        }).mount("#app")
+    </script>
+</body>
+
+</html>
